@@ -1,0 +1,81 @@
+name: callzo-usage-metering
+
+# The ${VAR:-default} values below are local-dev defaults so `docker compose up`
+# works with no setup. WEBHOOK_SECRET's default is the public test secret from
+# the assignment spec. Override any of them with a .env file (see .env.example);
+# the application code itself has no defaults for secrets.
+
+x-app: &app
+  build:
+    context: .
+    target: runtime
+  image: callzo-usage-metering:local
+  restart: unless-stopped
+  environment:
+    DATABASE_URL: postgresql://callzo:${POSTGRES_PASSWORD:-callzo_local_dev}@db:5432/callzo
+    WEBHOOK_SECRET: ${WEBHOOK_SECRET:-callzo_test_secret_change_me}
+    API_KEYS: ${API_KEYS:-local_dev_api_key}
+    DEFAULT_MONTHLY_CAP_CENTS: ${DEFAULT_MONTHLY_CAP_CENTS:-500}
+    LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  depends_on:
+    db:
+      condition: service_healthy
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: callzo
+      POSTGRES_USER: callzo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-callzo_local_dev}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U callzo -d callzo"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  api:
+    <<: *app
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=2)"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  worker:
+    <<: *app
+    command: ["python", "-m", "app.worker"]
+
+  # Runs the provided simulator once against the API, then exits.
+  simulator:
+    image: meetrj/callzo-webhook-simulator
+    depends_on:
+      api:
+        condition: service_healthy
+    command:
+      - --url
+      - http://api:8000/webhooks/calls
+      - --secret
+      - ${WEBHOOK_SECRET:-callzo_test_secret_change_me}
+      - --scenario
+      - ${SIMULATOR_SCENARIO:-all}
+
+  # `docker compose --profile test run --rm tests`
+  tests:
+    profiles: ["test"]
+    build:
+      context: .
+      target: test
+    environment:
+      TEST_DATABASE_URL: postgresql://callzo:${POSTGRES_PASSWORD:-callzo_local_dev}@db:5432/callzo_test
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
