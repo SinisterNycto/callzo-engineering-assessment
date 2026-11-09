@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Instrument Serif", ui-serif, Georgia, serif;
+
+  --color-canvas: #f6f7f9;
+  --color-line: #e6e8ed;
+  --color-ink: #0e1726;
+  --color-ink-soft: #3d4757;
+  --color-muted: #5f6878;
+
+  /* Teal brand. 600+ is dark enough for white text (WCAG AA). */
+  --color-brand-50: #edf8f8;
+  --color-brand-100: #d5efef;
+  --color-brand-200: #a9dede;
+  --color-brand-400: #5ec4c4;
+  --color-brand-500: #38a9a9;
+  --color-brand-600: #1f7f80;
+  --color-brand-700: #18676a;
+
+  /* Data colour for charts and meters. */
+  --color-data: #3157e0;
+  --color-data-soft: #dfe6fb;
+
+  --animate-flash: flash 1.8s ease-out;
+  @keyframes flash {
+    0% { background-color: var(--color-brand-100); }
+    100% { background-color: transparent; }
+  }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-canvas text-ink font-sans antialiased;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand-600;
+  }
+  /* Tabular figures so numbers don't shift width when they refresh. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  .select-chevron {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%235f6878' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 8 4 4 4-4'/%3E%3C/svg%3E");
+    background-position: right 0.6rem center;
+    background-repeat: no-repeat;
+    background-size: 1.1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Native date fields keep their text at the top of the box in Chrome and
+   Safari unless the field is a flex container. Kept outside any @layer so it
+   beats the `block` utility in the shared input style. */
+.date-input {
+  display: flex;
+  align-items: center;
+  padding-block: 0;
+}
+.date-input::-webkit-datetime-edit,
+.date-input::-webkit-datetime-edit-fields-wrapper {
+  padding: 0;
+}

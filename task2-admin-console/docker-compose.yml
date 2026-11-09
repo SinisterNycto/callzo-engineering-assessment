@@ -1,0 +1,21 @@
+name: callzo-usage-console
+
+services:
+  mock-api:
+    image: meetrj/callzo-mock-usage-api
+    container_name: mock-api
+    ports:
+      - "8001:8001"
+
+  # Pre-built image from Docker Hub (built from ./Dockerfile; see README
+  # "Publishing the image"). nginx serves the app and proxies /api/* to
+  # the mock API inside the Docker network.
+  frontend:
+    image: swastiknegi/callzo-task2-frontend:1.0.0
+    container_name: frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mock-api
+    environment:
+      - API_URL=http://mock-api:8001
