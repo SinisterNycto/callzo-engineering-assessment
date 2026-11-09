@@ -1,0 +1,12 @@
+# Assignment brief and specs (provided by Callzo, not part of the submission)
+*.pdf
+Task1_spec.md
+Task2_spec.md
+
+.env
+.DS_Store
+node_modules/
+dist/
+__pycache__/
+*.pyc
+.pytest_cache/
